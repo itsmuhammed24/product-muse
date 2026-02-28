@@ -1,25 +1,26 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ListOrdered, Plus, Trash2, Calculator, ArrowUpDown } from "lucide-react";
+import { ListOrdered, Plus, Trash2, Calculator, Sparkles, Loader2, Wand2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import { prioritizeFeatures } from "@/lib/po-agent";
 
 type Framework = "rice" | "moscow";
 
 interface Feature {
   id: string;
   name: string;
-  // RICE
   reach: number;
   impact: number;
   confidence: number;
   effort: number;
-  // MoSCoW
   moscow: "must" | "should" | "could" | "wont";
   riceScore?: number;
+  justification?: string;
 }
 
 const defaultFeatures: Feature[] = [
@@ -45,12 +46,12 @@ const Prioritization = () => {
   const [framework, setFramework] = useState<Framework>("rice");
   const [features, setFeatures] = useState<Feature[]>(defaultFeatures);
   const [newName, setNewName] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const sortedFeatures = [...features]
     .map((f) => ({ ...f, riceScore: calcRice(f) }))
     .sort((a, b) => (framework === "rice" ? b.riceScore - a.riceScore : 0));
 
-  // For MoSCoW, group by category
   const moscowOrder: Feature["moscow"][] = ["must", "should", "could", "wont"];
 
   const addFeature = () => {
@@ -67,6 +68,41 @@ const Prioritization = () => {
   const updateFeature = (id: string, updates: Partial<Feature>) =>
     setFeatures(features.map((f) => (f.id === id ? { ...f, ...updates } : f)));
 
+  const handleAiPrioritize = async () => {
+    if (features.length === 0) return;
+    setIsAiLoading(true);
+    try {
+      const result = await prioritizeFeatures(features.map((f) => ({ name: f.name })));
+      setFeatures(
+        features.map((f) => {
+          const ai = result.find((r) => r.name.toLowerCase() === f.name.toLowerCase());
+          if (!ai) return f;
+          return {
+            ...f,
+            reach: ai.reach,
+            impact: ai.impact,
+            confidence: ai.confidence,
+            effort: ai.effort,
+            moscow: ai.moscow,
+            justification: ai.justification,
+          };
+        })
+      );
+      toast({
+        title: "Priorisation IA terminée",
+        description: "Les scores RICE et catégories MoSCoW ont été mis à jour par l'IA.",
+      });
+    } catch (e: any) {
+      toast({
+        title: "Erreur de priorisation",
+        description: e.message || "Impossible de prioriser",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -76,7 +112,7 @@ const Prioritization = () => {
       />
 
       {/* Controls */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-6 flex-wrap">
         <Select value={framework} onValueChange={(v) => setFramework(v as Framework)}>
           <SelectTrigger className="w-48 bg-card">
             <SelectValue />
@@ -86,6 +122,21 @@ const Prioritization = () => {
             <SelectItem value="moscow">Framework MoSCoW</SelectItem>
           </SelectContent>
         </Select>
+
+        <Button
+          onClick={handleAiPrioritize}
+          disabled={isAiLoading || features.length === 0}
+          variant="outline"
+          className="border-primary/30 text-primary hover:bg-primary/5"
+        >
+          {isAiLoading ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Wand2 className="w-4 h-4 mr-2" />
+          )}
+          Prioriser avec l'IA
+        </Button>
+
         <div className="flex-1" />
         <div className="flex gap-2">
           <Input
@@ -110,7 +161,6 @@ const Prioritization = () => {
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
           >
-            {/* RICE Table */}
             <div className="bg-card rounded-xl shadow-card border border-border overflow-hidden">
               <div className="grid grid-cols-[1fr_80px_80px_80px_80px_100px_40px] gap-0 px-6 py-3 bg-secondary/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 <span>Feature</span>
@@ -136,7 +186,14 @@ const Prioritization = () => {
                     <span className="w-6 h-6 rounded-full gradient-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
                       {i + 1}
                     </span>
-                    <span className="font-medium text-foreground text-sm">{f.name}</span>
+                    <div>
+                      <span className="font-medium text-foreground text-sm">{f.name}</span>
+                      {f.justification && (
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" /> {f.justification}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <Input
                     type="number"
@@ -176,7 +233,6 @@ const Prioritization = () => {
               ))}
             </div>
 
-            {/* RICE Explanation */}
             <div className="mt-6 p-5 rounded-xl bg-secondary/50 border border-border">
               <h4 className="text-sm font-semibold text-foreground mb-2" style={{ fontFamily: "'DM Sans', sans-serif" }}>
                 Comment fonctionne RICE ?
@@ -212,7 +268,14 @@ const Prioritization = () => {
                   ) : (
                     items.map((f) => (
                       <div key={f.id} className="px-6 py-4 border-t border-border flex items-center justify-between hover:bg-secondary/10 transition-colors">
-                        <span className="font-medium text-foreground text-sm">{f.name}</span>
+                        <div>
+                          <span className="font-medium text-foreground text-sm">{f.name}</span>
+                          {f.justification && (
+                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" /> {f.justification}
+                            </p>
+                          )}
+                        </div>
                         <div className="flex items-center gap-3">
                           <Select value={f.moscow} onValueChange={(v) => updateFeature(f.id, { moscow: v as Feature["moscow"] })}>
                             <SelectTrigger className="h-8 w-36 text-sm bg-background">
