@@ -1,10 +1,10 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, MessageSquareText, ListOrdered, FileText, Sparkles } from "lucide-react";
+import { LayoutDashboard, MessageSquareText, ListOrdered, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/feedback", icon: MessageSquareText, label: "Analyse Feedback" },
+  { to: "/feedback", icon: MessageSquareText, label: "Feedback" },
   { to: "/prioritization", icon: ListOrdered, label: "Priorisation" },
   { to: "/user-stories", icon: FileText, label: "User Stories" },
 ];
@@ -13,24 +13,27 @@ const AppSidebar = () => {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col z-50">
+    <aside className="fixed left-0 top-0 bottom-0 w-[240px] bg-sidebar flex flex-col z-50">
       {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg gradient-warm flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+      <div className="px-5 pt-7 pb-6">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg gradient-warm flex items-center justify-center">
+            <span className="text-primary-foreground text-sm font-bold" style={{ fontFamily: "'Inter', sans-serif" }}>P</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-sidebar-primary-foreground" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <p className="text-[15px] font-semibold text-sidebar-accent-foreground tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
               PO Agent
-            </h1>
-            <p className="text-xs text-sidebar-foreground opacity-60">by Thiga</p>
+            </p>
+            <p className="text-[10px] text-sidebar-foreground/50 tracking-wide uppercase">by Thiga</p>
           </div>
         </div>
       </div>
 
+      {/* Divider */}
+      <div className="mx-5 h-px bg-sidebar-border mb-2" />
+
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 px-3 py-2 space-y-0.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
@@ -40,21 +43,21 @@ const AppSidebar = () => {
               className="relative block"
             >
               <div
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-150 text-[13px] ${
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground"
                 }`}
               >
                 {isActive && (
                   <motion.div
-                    layoutId="sidebar-indicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full gradient-warm"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    layoutId="sidebar-active"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-sidebar-primary"
+                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
                   />
                 )}
-                <item.icon className="w-5 h-5 shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
+                <item.icon className="w-[18px] h-[18px] shrink-0 opacity-80" />
+                <span>{item.label}</span>
               </div>
             </NavLink>
           );
@@ -62,12 +65,12 @@ const AppSidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="px-4 py-3 rounded-lg bg-sidebar-accent/50">
-          <p className="text-xs text-sidebar-foreground opacity-70">
-            Assistant IA pour Product Owners
+      <div className="px-5 pb-5">
+        <div className="px-3 py-2.5 rounded-lg bg-sidebar-accent/30">
+          <p className="text-[11px] text-sidebar-foreground/50 leading-relaxed">
+            Assistant IA · Product Owners
           </p>
-          <p className="text-xs text-sidebar-foreground opacity-40 mt-1">v1.0 — Entretien Thiga</p>
+          <p className="text-[10px] text-sidebar-foreground/30 mt-0.5">v1.0</p>
         </div>
       </div>
     </aside>

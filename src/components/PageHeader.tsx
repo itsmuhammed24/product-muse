@@ -10,20 +10,13 @@ interface PageHeaderProps {
 const PageHeader = ({ title, description, icon }: PageHeaderProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.35 }}
       className="mb-8"
     >
-      <div className="flex items-center gap-3 mb-2">
-        {icon && (
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-            {icon}
-          </div>
-        )}
-        <h1 className="text-3xl font-bold text-foreground">{title}</h1>
-      </div>
-      <p className="text-muted-foreground ml-[52px]">{description}</p>
+      <h1 className="text-[32px] font-normal text-foreground leading-tight mb-1">{title}</h1>
+      <p className="text-[14px] text-muted-foreground">{description}</p>
     </motion.div>
   );
 };
