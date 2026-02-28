@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquareText, Send, Loader2, TrendingUp, Tag, AlertTriangle, ThumbsUp, Sparkles } from "lucide-react";
+import { Send, Loader2, TrendingUp, Tag, AlertTriangle, ThumbsUp, Sparkles } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,20 +32,12 @@ const FeedbackAnalysis = () => {
     setIsAnalyzing(true);
     setResult(null);
     setLoadingStep(0);
-
-    const interval = setInterval(() => {
-      setLoadingStep((s) => (s + 1) % loadingMessages.length);
-    }, 1500);
-
+    const interval = setInterval(() => setLoadingStep((s) => (s + 1) % loadingMessages.length), 1500);
     try {
       const analysis = await analyzeFeedback(feedback);
       setResult(analysis);
     } catch (e: any) {
-      toast({
-        title: "Erreur d'analyse",
-        description: e.message || "Impossible d'analyser les feedbacks",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur d'analyse", description: e.message || "Impossible d'analyser", variant: "destructive" });
     } finally {
       clearInterval(interval);
       setIsAnalyzing(false);
@@ -53,51 +45,40 @@ const FeedbackAnalysis = () => {
   };
 
   const sentimentConfig = {
-    positive: { label: "Positif", icon: ThumbsUp, cls: "bg-success/8 text-success ring-1 ring-success/20" },
-    negative: { label: "Négatif", icon: AlertTriangle, cls: "bg-destructive/8 text-destructive ring-1 ring-destructive/20" },
-    mixed: { label: "Mixte", icon: TrendingUp, cls: "bg-warning/8 text-warning ring-1 ring-warning/20" },
+    positive: { label: "Positif", icon: ThumbsUp, cls: "bg-success/10 text-success" },
+    negative: { label: "Négatif", icon: AlertTriangle, cls: "bg-destructive/10 text-destructive" },
+    mixed: { label: "Mixte", icon: TrendingUp, cls: "bg-warning/10 text-warning" },
   };
 
   return (
     <>
-      <PageHeader
-        title="Analyse de Feedback"
-        description="Collez vos retours clients pour en extraire les insights."
-      />
+      <PageHeader title="Analyse de Feedback" description="Collez vos retours clients pour en extraire patterns, sentiments et demandes." />
 
       {/* Input */}
-      <div className="bg-card rounded-xl p-5 shadow-card border border-border mb-6">
-        <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-2.5 block">
+      <div className="rounded-lg border border-border bg-card p-5 mb-6">
+        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.1em] mb-2 block">
           Retours clients
         </label>
         <Textarea
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
           placeholder="Collez ici les retours — emails, tickets, commentaires…"
-          className="min-h-[120px] resize-none mb-3 bg-background text-[14px]"
+          className="min-h-[120px] resize-none mb-3 bg-background text-[13px]"
         />
         <div className="flex items-center justify-between">
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex gap-1.5">
             {sampleFeedbacks.map((s, i) => (
               <button
                 key={i}
-                onClick={() => setFeedback((prev) => (prev ? prev + "\n\n" : "") + s)}
-                className="text-[11px] px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                onClick={() => setFeedback((p) => (p ? p + "\n\n" : "") + s)}
+                className="text-[11px] px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >
                 Exemple {i + 1}
               </button>
             ))}
           </div>
-          <Button
-            onClick={handleAnalyze}
-            disabled={!feedback.trim() || isAnalyzing}
-            className="gradient-primary text-primary-foreground border-0 hover:opacity-90 text-[13px] h-9 px-4"
-          >
-            {isAnalyzing ? (
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-            ) : (
-              <Send className="w-3.5 h-3.5 mr-1.5" />
-            )}
+          <Button onClick={handleAnalyze} disabled={!feedback.trim() || isAnalyzing} className="bg-primary text-primary-foreground hover:bg-primary/90 text-[13px] h-9 px-4">
+            {isAnalyzing ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
             Analyser
           </Button>
         </div>
@@ -105,18 +86,12 @@ const FeedbackAnalysis = () => {
 
       {/* Loading */}
       {isAnalyzing && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20">
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center mb-3">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center py-20">
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mb-3">
             <Sparkles className="w-5 h-5 text-primary-foreground animate-pulse" />
           </div>
           <AnimatePresence mode="wait">
-            <motion.p
-              key={loadingStep}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              className="text-[13px] text-muted-foreground"
-            >
+            <motion.p key={loadingStep} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="text-[13px] text-muted-foreground">
               {loadingMessages[loadingStep]}
             </motion.p>
           </AnimatePresence>
@@ -126,31 +101,24 @@ const FeedbackAnalysis = () => {
       {/* Results */}
       <AnimatePresence>
         {result && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-            className="space-y-4"
-          >
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
-              <Sparkles className="w-3 h-3" />
-              Résultats générés par IA
-            </div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+            <p className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Résultats générés par IA
+            </p>
 
             {/* Summary + Sentiment */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 bg-card rounded-xl p-5 shadow-card border border-border">
-                <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2.5">Résumé</h3>
-                <p className="text-[14px] text-foreground leading-relaxed">{result.summary}</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2 rounded-lg border border-border bg-card p-5">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.1em] mb-2">Résumé</h3>
+                <p className="text-[13px] text-foreground leading-relaxed">{result.summary}</p>
               </div>
-              <div className="bg-card rounded-xl p-5 shadow-card border border-border flex flex-col items-center justify-center">
-                <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Sentiment</h3>
+              <div className="rounded-lg border border-border bg-card p-5 flex flex-col items-center justify-center">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.1em] mb-3">Sentiment</h3>
                 {(() => {
                   const cfg = sentimentConfig[result.sentiment];
                   return (
-                    <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[13px] font-medium ${cfg.cls}`}>
-                      <cfg.icon className="w-4 h-4" />
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium ${cfg.cls}`}>
+                      <cfg.icon className="w-3.5 h-3.5" />
                       {cfg.label}
                     </div>
                   );
@@ -159,48 +127,31 @@ const FeedbackAnalysis = () => {
             </div>
 
             {/* Patterns */}
-            <div className="bg-card rounded-xl p-5 shadow-card border border-border">
-              <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Patterns</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.1em] mb-3">Patterns identifiés</h3>
+              <div className="grid grid-cols-2 gap-2">
                 {result.patterns.map((p, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.06 }}
-                    className="flex items-start gap-2.5 p-2.5 rounded-lg bg-secondary/50"
-                  >
+                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} className="flex items-start gap-2 p-2.5 rounded bg-secondary/50">
                     <TrendingUp className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                    <span className="text-[13px] text-foreground">{p}</span>
+                    <span className="text-[12px] text-foreground">{p}</span>
                   </motion.div>
                 ))}
               </div>
             </div>
 
             {/* Feature Requests */}
-            <div className="bg-card rounded-xl p-5 shadow-card border border-border">
-              <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Demandes de features</h3>
-              <div className="space-y-2">
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.1em] mb-3">Demandes de features</h3>
+              <div className="space-y-1.5">
                 {result.featureRequests.map((fr, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Tag className="w-3.5 h-3.5 text-accent" />
-                      <span className="text-[13px] font-medium text-foreground">{fr.title}</span>
+                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }} className="flex items-center justify-between p-3 rounded bg-secondary/30">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-[12px] font-medium text-foreground">{fr.title}</span>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <Badge
-                        variant={fr.priority === "Critique" ? "destructive" : "secondary"}
-                        className="text-[10px]"
-                      >
-                        {fr.priority}
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground">{fr.mentions} mentions</span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={fr.priority === "Critique" ? "destructive" : "secondary"} className="text-[10px]">{fr.priority}</Badge>
+                      <span className="text-[10px] text-muted-foreground">{fr.mentions} mentions</span>
                     </div>
                   </motion.div>
                 ))}
@@ -208,19 +159,13 @@ const FeedbackAnalysis = () => {
             </div>
 
             {/* Pain Points */}
-            <div className="bg-card rounded-xl p-5 shadow-card border border-border">
-              <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Points de douleur</h3>
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.1em] mb-3">Points de douleur</h3>
               <div className="space-y-1.5">
                 {result.painPoints.map((pp, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.06 }}
-                    className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/4"
-                  >
+                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} className="flex items-start gap-2 p-2.5 rounded bg-destructive/5">
                     <AlertTriangle className="w-3.5 h-3.5 text-destructive mt-0.5 shrink-0" />
-                    <span className="text-[13px] text-foreground">{pp}</span>
+                    <span className="text-[12px] text-foreground">{pp}</span>
                   </motion.div>
                 ))}
               </div>

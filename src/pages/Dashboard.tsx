@@ -1,42 +1,43 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { MessageSquareText, ListOrdered, FileText, ArrowUpRight, TrendingUp, Zap, BarChart3 } from "lucide-react";
+import { MessageSquareText, ListOrdered, FileText, ArrowUpRight, Zap } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 
 const stats = [
-  { label: "Feedbacks analysés", value: "247", change: "+12%", positive: true },
-  { label: "Features priorisées", value: "58", change: "+8%", positive: true },
-  { label: "User Stories", value: "134", change: "+23%", positive: true },
-  { label: "Heures gagnées", value: "32h", change: "ce mois", positive: true },
+  { label: "Feedbacks analysés", value: "247", sub: "+12% ce mois" },
+  { label: "Features priorisées", value: "58", sub: "+8 cette semaine" },
+  { label: "User Stories générées", value: "134", sub: "+23% vs. mois dernier" },
+  { label: "Heures gagnées", value: "32h", sub: "estimation ce mois" },
 ];
 
-const features = [
+const tools = [
   {
     to: "/feedback",
     icon: MessageSquareText,
     title: "Analyse de Feedback",
-    description: "Identifiez les patterns et sentiments dans vos retours clients.",
-    tag: "NLP",
+    desc: "Identifiez les patterns, le sentiment et les demandes de features dans vos retours clients.",
   },
   {
     to: "/prioritization",
     icon: ListOrdered,
     title: "Priorisation",
-    description: "Scorez vos features avec RICE et MoSCoW automatiquement.",
-    tag: "Scoring",
+    desc: "Scorez automatiquement vos features avec les frameworks RICE et MoSCoW.",
   },
   {
     to: "/user-stories",
     icon: FileText,
     title: "User Stories",
-    description: "Générez des stories structurées avec critères d'acceptation.",
-    tag: "Génération",
+    desc: "Générez des stories structurées avec critères d'acceptation et estimation.",
   },
 ];
 
 const fade = {
-  hidden: { opacity: 0, y: 12 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.35 } }),
+  hidden: { opacity: 0, y: 10 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.05, duration: 0.3, ease: "easeOut" as const },
+  }),
 };
 
 const Dashboard = () => {
@@ -44,68 +45,64 @@ const Dashboard = () => {
     <>
       <PageHeader
         title="Dashboard"
-        description="Vue d'ensemble de votre assistant Product Owner."
+        description="Vue d'ensemble de votre assistant Product Owner propulsé par l'IA."
       />
 
-      {/* Stats row */}
-      <div className="grid grid-cols-4 gap-3 mb-10">
-        {stats.map((stat, i) => (
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-3 mb-12">
+        {stats.map((s, i) => (
           <motion.div
-            key={stat.label}
+            key={s.label}
             custom={i}
             variants={fade}
             initial="hidden"
             animate="show"
-            className="bg-card rounded-xl p-4 shadow-card border border-border group hover:shadow-elevated transition-shadow duration-300"
+            className="p-4 rounded-lg border border-border bg-card hover:shadow-card transition-shadow duration-200"
           >
-            <div className="flex items-baseline justify-between mb-2">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{stat.label}</span>
-              <span className="text-[11px] font-medium text-accent">{stat.change}</span>
-            </div>
-            <p className="text-[28px] font-semibold text-foreground tracking-tight leading-none" style={{ fontFamily: "'Inter', sans-serif" }}>
-              {stat.value}
+            <p
+              className="text-[32px] font-semibold text-foreground leading-none tracking-tight mb-1"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {s.value}
             </p>
+            <p className="text-[12px] text-muted-foreground">{s.label}</p>
+            <p className="text-[10px] text-primary mt-1.5 font-medium">{s.sub}</p>
           </motion.div>
         ))}
       </div>
 
-      {/* Section heading */}
-      <div className="flex items-baseline justify-between mb-4">
-        <h2 className="text-[22px] text-foreground">Outils</h2>
-        <span className="text-[12px] text-muted-foreground">{features.length} modules disponibles</span>
+      {/* Tools heading */}
+      <div className="mb-4">
+        <h2 className="text-[24px] text-foreground">Outils</h2>
       </div>
 
-      {/* Feature cards */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
-        {features.map((feature, i) => (
+      {/* Tools */}
+      <div className="space-y-2 mb-12">
+        {tools.map((t, i) => (
           <motion.div
-            key={feature.to}
+            key={t.to}
             custom={i + 4}
             variants={fade}
             initial="hidden"
             animate="show"
           >
             <Link
-              to={feature.to}
-              className="group block bg-card rounded-xl p-5 shadow-card border border-border hover:shadow-elevated transition-all duration-300 hover:border-primary/20 h-full"
+              to={t.to}
+              className="group flex items-center gap-5 p-4 rounded-lg border border-border bg-card hover:border-primary/20 hover:shadow-card transition-all duration-200"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors duration-200">
-                  <feature.icon className="w-5 h-5 text-foreground/70 group-hover:text-primary transition-colors duration-200" />
-                </div>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium px-2 py-0.5 rounded bg-secondary">
-                  {feature.tag}
-                </span>
+              <div className="w-10 h-10 rounded-md bg-primary/8 flex items-center justify-center shrink-0 group-hover:bg-primary/12 transition-colors">
+                <t.icon className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-[15px] font-medium text-foreground mb-1.5" style={{ fontFamily: "'Inter', sans-serif" }}>
-                {feature.title}
-              </h3>
-              <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">
-                {feature.description}
-              </p>
-              <div className="flex items-center gap-1 text-[12px] font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                Ouvrir <ArrowUpRight className="w-3.5 h-3.5" />
+              <div className="flex-1 min-w-0">
+                <h3
+                  className="text-[14px] font-medium text-foreground mb-0.5"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  {t.title}
+                </h3>
+                <p className="text-[12px] text-muted-foreground leading-relaxed">{t.desc}</p>
               </div>
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
             </Link>
           </motion.div>
         ))}
@@ -113,24 +110,19 @@ const Dashboard = () => {
 
       {/* Tip */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="rounded-xl bg-foreground p-5 text-background"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.35 }}
+        className="flex items-start gap-3 p-4 rounded-lg bg-primary text-primary-foreground"
       >
-        <div className="flex items-start gap-4">
-          <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0 mt-0.5">
-            <Zap className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-[13px] font-medium mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
-              Workflow recommandé
-            </p>
-            <p className="text-[12px] text-background/60 leading-relaxed">
-              Analysez vos feedbacks → Priorisez avec RICE → Générez vos user stories. 
-              L'IA s'améliore à chaque itération en apprenant de vos choix de priorisation.
-            </p>
-          </div>
+        <Zap className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
+        <div>
+          <p className="text-[12px] font-medium mb-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+            Workflow recommandé
+          </p>
+          <p className="text-[11px] opacity-70 leading-relaxed">
+            Feedback → Priorisation RICE → User Stories. L'IA affine ses recommandations à chaque itération.
+          </p>
         </div>
       </motion.div>
     </>
