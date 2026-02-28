@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { LayoutDashboard, MessageSquareText, ListOrdered, FileText, ArrowRight, TrendingUp, Users, Zap } from "lucide-react";
+import { MessageSquareText, ListOrdered, FileText, ArrowUpRight, TrendingUp, Zap, BarChart3 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 
 const stats = [
-  { label: "Feedbacks analysés", value: "247", trend: "+12%", icon: MessageSquareText },
-  { label: "Features priorisées", value: "58", trend: "+8%", icon: ListOrdered },
-  { label: "User Stories générées", value: "134", trend: "+23%", icon: FileText },
-  { label: "Temps gagné", value: "32h", trend: "ce mois", icon: Zap },
+  { label: "Feedbacks analysés", value: "247", change: "+12%", positive: true },
+  { label: "Features priorisées", value: "58", change: "+8%", positive: true },
+  { label: "User Stories", value: "134", change: "+23%", positive: true },
+  { label: "Heures gagnées", value: "32h", change: "ce mois", positive: true },
 ];
 
 const features = [
@@ -15,33 +15,28 @@ const features = [
     to: "/feedback",
     icon: MessageSquareText,
     title: "Analyse de Feedback",
-    description: "Analysez les retours clients, identifiez les patterns et extrayez les demandes de features.",
-    color: "gradient-primary",
+    description: "Identifiez les patterns et sentiments dans vos retours clients.",
+    tag: "NLP",
   },
   {
     to: "/prioritization",
     icon: ListOrdered,
     title: "Priorisation",
-    description: "Scorez et priorisez vos features avec les frameworks MoSCoW, RICE et plus encore.",
-    color: "gradient-warm",
+    description: "Scorez vos features avec RICE et MoSCoW automatiquement.",
+    tag: "Scoring",
   },
   {
     to: "/user-stories",
     icon: FileText,
     title: "User Stories",
-    description: "Générez des user stories structurées avec critères d'acceptation et estimation de complexité.",
-    color: "gradient-accent",
+    description: "Générez des stories structurées avec critères d'acceptation.",
+    tag: "Génération",
   },
 ];
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+const fade = {
+  hidden: { opacity: 0, y: 12 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.35 } }),
 };
 
 const Dashboard = () => {
@@ -50,85 +45,90 @@ const Dashboard = () => {
       <PageHeader
         title="Dashboard"
         description="Vue d'ensemble de votre assistant Product Owner."
-        icon={<LayoutDashboard className="w-5 h-5 text-primary-foreground" />}
       />
 
-      {/* Stats */}
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10"
-      >
-        {stats.map((stat) => (
+      {/* Stats row */}
+      <div className="grid grid-cols-4 gap-3 mb-10">
+        {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
-            variants={item}
-            className="bg-card rounded-xl p-5 shadow-card border border-border hover:shadow-elevated transition-shadow duration-300"
+            custom={i}
+            variants={fade}
+            initial="hidden"
+            animate="show"
+            className="bg-card rounded-xl p-4 shadow-card border border-border group hover:shadow-elevated transition-shadow duration-300"
           >
-            <div className="flex items-center justify-between mb-3">
-              <stat.icon className="w-5 h-5 text-muted-foreground" />
-              <span className="text-xs font-medium text-accent px-2 py-0.5 rounded-full bg-accent/10">
-                {stat.trend}
-              </span>
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{stat.label}</span>
+              <span className="text-[11px] font-medium text-accent">{stat.change}</span>
             </div>
-            <p className="text-2xl font-bold text-foreground" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <p className="text-[28px] font-semibold text-foreground tracking-tight leading-none" style={{ fontFamily: "'Inter', sans-serif" }}>
               {stat.value}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
           </motion.div>
         ))}
-      </motion.div>
+      </div>
 
-      {/* Feature Cards */}
-      <h2 className="text-xl font-bold text-foreground mb-4">Outils disponibles</h2>
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-3 gap-5"
-      >
-        {features.map((feature) => (
-          <motion.div key={feature.to} variants={item}>
+      {/* Section heading */}
+      <div className="flex items-baseline justify-between mb-4">
+        <h2 className="text-[22px] text-foreground">Outils</h2>
+        <span className="text-[12px] text-muted-foreground">{features.length} modules disponibles</span>
+      </div>
+
+      {/* Feature cards */}
+      <div className="grid grid-cols-3 gap-4 mb-10">
+        {features.map((feature, i) => (
+          <motion.div
+            key={feature.to}
+            custom={i + 4}
+            variants={fade}
+            initial="hidden"
+            animate="show"
+          >
             <Link
               to={feature.to}
-              className="group block bg-card rounded-xl p-6 shadow-card border border-border hover:shadow-elevated transition-all duration-300 hover:-translate-y-1"
+              className="group block bg-card rounded-xl p-5 shadow-card border border-border hover:shadow-elevated transition-all duration-300 hover:border-primary/20 h-full"
             >
-              <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4`}>
-                <feature.icon className="w-6 h-6 text-primary-foreground" />
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors duration-200">
+                  <feature.icon className="w-5 h-5 text-foreground/70 group-hover:text-primary transition-colors duration-200" />
+                </div>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium px-2 py-0.5 rounded bg-secondary">
+                  {feature.tag}
+                </span>
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+              <h3 className="text-[15px] font-medium text-foreground mb-1.5" style={{ fontFamily: "'Inter', sans-serif" }}>
                 {feature.title}
               </h3>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+              <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">
                 {feature.description}
               </p>
-              <div className="flex items-center gap-2 text-sm font-medium text-primary group-hover:gap-3 transition-all duration-200">
-                Commencer <ArrowRight className="w-4 h-4" />
+              <div className="flex items-center gap-1 text-[12px] font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                Ouvrir <ArrowUpRight className="w-3.5 h-3.5" />
               </div>
             </Link>
           </motion.div>
         ))}
-      </motion.div>
+      </div>
 
-      {/* Quick tip */}
+      {/* Tip */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="mt-10 rounded-xl gradient-primary p-6 text-primary-foreground"
+        transition={{ delay: 0.4 }}
+        className="rounded-xl bg-foreground p-5 text-background"
       >
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-primary-foreground/20 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0 mt-0.5">
+            <Zap className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-1" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              Astuce du jour
-            </h3>
-            <p className="text-primary-foreground/80 text-sm leading-relaxed">
-              Commencez par analyser vos feedbacks clients pour identifier les patterns récurrents, 
-              puis utilisez la priorisation RICE pour scorer objectivement vos features avant de générer vos user stories.
+            <p className="text-[13px] font-medium mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+              Workflow recommandé
+            </p>
+            <p className="text-[12px] text-background/60 leading-relaxed">
+              Analysez vos feedbacks → Priorisez avec RICE → Générez vos user stories. 
+              L'IA s'améliore à chaque itération en apprenant de vos choix de priorisation.
             </p>
           </div>
         </div>
