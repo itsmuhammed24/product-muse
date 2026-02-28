@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquareText, Send, Loader2, TrendingUp, Tag, AlertTriangle, ThumbsUp } from "lucide-react";
+import { MessageSquareText, Send, Loader2, TrendingUp, Tag, AlertTriangle, ThumbsUp, Sparkles } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
+import { analyzeFeedback, type FeedbackAnalysis as AnalysisResult } from "@/lib/po-agent";
 
 const sampleFeedbacks = [
   "Le tableau de bord est super mais il manque un export PDF. Aussi, la recherche est trop lente quand on a beaucoup de projets. J'adorerais avoir des filtres avancés.",
@@ -12,49 +14,42 @@ const sampleFeedbacks = [
   "Bug critique : les données se perdent quand on rafraîchit la page en plein édition. Plusieurs membres de l'équipe ont remonté ce problème.",
 ];
 
-interface AnalysisResult {
-  summary: string;
-  sentiment: "positive" | "negative" | "mixed";
-  patterns: string[];
-  featureRequests: { title: string; priority: string; mentions: number }[];
-  painPoints: string[];
-}
-
-const mockAnalysis: AnalysisResult = {
-  summary: "Les retours révèlent un besoin fort d'export et d'intégrations tierces. Le produit est globalement apprécié mais des problèmes de performance et de fiabilité sont remontés.",
-  sentiment: "mixed",
-  patterns: [
-    "Demande récurrente d'export (PDF, CSV)",
-    "Besoin d'intégrations (Slack, Teams)",
-    "Problèmes de performance sur gros volumes",
-    "Satisfaction sur le nouveau design",
-  ],
-  featureRequests: [
-    { title: "Export PDF du tableau de bord", priority: "Haute", mentions: 3 },
-    { title: "Intégration Slack", priority: "Haute", mentions: 2 },
-    { title: "Filtres avancés", priority: "Moyenne", mentions: 1 },
-    { title: "Sauvegarde automatique", priority: "Critique", mentions: 4 },
-  ],
-  painPoints: [
-    "Recherche lente sur gros volumes de projets",
-    "Perte de données lors du rafraîchissement",
-    "Manque de notifications push",
-  ],
-};
+const loadingMessages = [
+  "Analyse du sentiment en cours…",
+  "Identification des patterns…",
+  "Extraction des demandes de features…",
+  "Évaluation des points de douleur…",
+];
 
 const FeedbackAnalysis = () => {
   const [feedback, setFeedback] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [loadingStep, setLoadingStep] = useState(0);
 
   const handleAnalyze = async () => {
     if (!feedback.trim()) return;
     setIsAnalyzing(true);
     setResult(null);
-    // Simulate AI processing
-    await new Promise((r) => setTimeout(r, 2000));
-    setResult(mockAnalysis);
-    setIsAnalyzing(false);
+    setLoadingStep(0);
+
+    const interval = setInterval(() => {
+      setLoadingStep((s) => (s + 1) % loadingMessages.length);
+    }, 1500);
+
+    try {
+      const analysis = await analyzeFeedback(feedback);
+      setResult(analysis);
+    } catch (e: any) {
+      toast({
+        title: "Erreur d'analyse",
+        description: e.message || "Impossible d'analyser les feedbacks",
+        variant: "destructive",
+      });
+    } finally {
+      clearInterval(interval);
+      setIsAnalyzing(false);
+    }
   };
 
   const sentimentConfig = {
@@ -109,6 +104,30 @@ const FeedbackAnalysis = () => {
         </div>
       </div>
 
+      {/* Loading state */}
+      {isAnalyzing && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-16"
+        >
+          <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mb-4">
+            <Sparkles className="w-8 h-8 text-primary-foreground animate-pulse" />
+          </div>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={loadingStep}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-sm text-muted-foreground"
+            >
+              {loadingMessages[loadingStep]}
+            </motion.p>
+          </AnimatePresence>
+        </motion.div>
+      )}
+
       {/* Results */}
       <AnimatePresence>
         {result && (
@@ -119,6 +138,12 @@ const FeedbackAnalysis = () => {
             transition={{ duration: 0.4 }}
             className="space-y-5"
           >
+            {/* AI badge */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Sparkles className="w-3 h-3" />
+              Analyse générée par IA — résultats basés sur vos retours clients
+            </div>
+
             {/* Summary + Sentiment */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="md:col-span-2 bg-card rounded-xl p-6 shadow-card border border-border">
@@ -146,10 +171,16 @@ const FeedbackAnalysis = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {result.patterns.map((p, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50"
+                  >
                     <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <span className="text-sm text-foreground">{p}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -161,8 +192,11 @@ const FeedbackAnalysis = () => {
               </h3>
               <div className="space-y-3">
                 {result.featureRequests.map((fr, i) => (
-                  <div
+                  <motion.div
                     key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08 }}
                     className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 border border-border"
                   >
                     <div className="flex items-center gap-3">
@@ -178,7 +212,7 @@ const FeedbackAnalysis = () => {
                       </Badge>
                       <span className="text-xs text-muted-foreground">{fr.mentions} mentions</span>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -190,10 +224,16 @@ const FeedbackAnalysis = () => {
               </h3>
               <div className="space-y-2">
                 {result.painPoints.map((pp, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-destructive/5">
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-destructive/5"
+                  >
                     <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                     <span className="text-sm text-foreground">{pp}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>

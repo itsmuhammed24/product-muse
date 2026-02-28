@@ -1,22 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Wand2, Loader2, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { FileText, Wand2, Loader2, Copy, Check, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface UserStory {
-  id: string;
-  role: string;
-  action: string;
-  benefit: string;
-  acceptanceCriteria: string[];
-  complexity: "XS" | "S" | "M" | "L" | "XL";
-  complexityReason: string;
-}
+import { toast } from "@/hooks/use-toast";
+import { generateStories, type UserStory } from "@/lib/po-agent";
 
 const complexityColors: Record<string, string> = {
   XS: "bg-success/10 text-success border-success/20",
@@ -26,52 +17,11 @@ const complexityColors: Record<string, string> = {
   XL: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
-const mockStories: UserStory[] = [
-  {
-    id: "1",
-    role: "utilisateur connecté",
-    action: "exporter mon tableau de bord en PDF",
-    benefit: "partager facilement un rapport de progression avec mon équipe et mes stakeholders",
-    acceptanceCriteria: [
-      "Un bouton 'Exporter en PDF' est visible sur la page du tableau de bord",
-      "Le PDF généré contient toutes les métriques visibles à l'écran",
-      "Le PDF inclut la date de génération et le nom du projet",
-      "Le téléchargement se lance en moins de 5 secondes",
-      "Le PDF est correctement formaté en A4 portrait",
-    ],
-    complexity: "M",
-    complexityReason: "Nécessite une librairie de génération PDF côté client et un formatage fidèle au design.",
-  },
-  {
-    id: "2",
-    role: "chef de projet",
-    action: "recevoir des notifications Slack quand une tâche change de statut",
-    benefit: "rester informé en temps réel sans avoir à vérifier constamment l'application",
-    acceptanceCriteria: [
-      "L'utilisateur peut connecter son workspace Slack depuis les paramètres",
-      "Les notifications sont envoyées quand une tâche passe à 'En cours', 'En revue' ou 'Terminée'",
-      "Le message Slack inclut le nom de la tâche, l'ancien et le nouveau statut",
-      "L'utilisateur peut choisir le channel de destination",
-      "Un bouton de déconnexion Slack est disponible",
-    ],
-    complexity: "L",
-    complexityReason: "Intégration OAuth Slack + webhook + gestion des permissions et des erreurs réseau.",
-  },
-  {
-    id: "3",
-    role: "membre de l'équipe",
-    action: "retrouver mon travail en cours si je rafraîchis la page accidentellement",
-    benefit: "ne jamais perdre de données et travailler en toute confiance",
-    acceptanceCriteria: [
-      "Les modifications sont sauvegardées automatiquement toutes les 30 secondes",
-      "Un indicateur visuel confirme la dernière sauvegarde",
-      "En cas de rafraîchissement, l'état précédent est restauré",
-      "Un message informe l'utilisateur que son travail a été restauré",
-      "L'utilisateur peut choisir de ne pas restaurer et repartir à zéro",
-    ],
-    complexity: "S",
-    complexityReason: "Utilisation de localStorage/sessionStorage. Pas d'appel serveur supplémentaire nécessaire.",
-  },
+const loadingMessages = [
+  "Analyse de la feature…",
+  "Identification des personas…",
+  "Rédaction des critères d'acceptation…",
+  "Estimation de la complexité…",
 ];
 
 const UserStories = () => {
@@ -81,15 +31,32 @@ const UserStories = () => {
   const [stories, setStories] = useState<UserStory[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [loadingStep, setLoadingStep] = useState(0);
 
   const handleGenerate = async () => {
     if (!featureDesc.trim()) return;
     setIsGenerating(true);
     setStories([]);
-    await new Promise((r) => setTimeout(r, 2500));
-    setStories(mockStories);
-    setIsGenerating(false);
-    setExpandedId(mockStories[0].id);
+    setLoadingStep(0);
+
+    const interval = setInterval(() => {
+      setLoadingStep((s) => (s + 1) % loadingMessages.length);
+    }, 1500);
+
+    try {
+      const result = await generateStories(featureDesc, persona);
+      setStories(result);
+      if (result.length > 0) setExpandedId(result[0].id);
+    } catch (e: any) {
+      toast({
+        title: "Erreur de génération",
+        description: e.message || "Impossible de générer les user stories",
+        variant: "destructive",
+      });
+    } finally {
+      clearInterval(interval);
+      setIsGenerating(false);
+    }
   };
 
   const copyStory = (story: UserStory) => {
@@ -157,10 +124,20 @@ const UserStories = () => {
           animate={{ opacity: 1 }}
           className="flex flex-col items-center justify-center py-16"
         >
-          <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mb-4 animate-pulse">
-            <Wand2 className="w-8 h-8 text-primary-foreground" />
+          <div className="w-16 h-16 rounded-2xl gradient-warm flex items-center justify-center mb-4">
+            <Wand2 className="w-8 h-8 text-primary-foreground animate-pulse" />
           </div>
-          <p className="text-muted-foreground text-sm">Génération en cours…</p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={loadingStep}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-sm text-muted-foreground"
+            >
+              {loadingMessages[loadingStep]}
+            </motion.p>
+          </AnimatePresence>
         </motion.div>
       )}
 
@@ -177,6 +154,10 @@ const UserStories = () => {
               <h2 className="text-lg font-bold text-foreground">
                 {stories.length} User Stories générées
               </h2>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Sparkles className="w-3 h-3" />
+                Générées par IA
+              </div>
             </div>
 
             {stories.map((story, i) => (
@@ -187,7 +168,6 @@ const UserStories = () => {
                 transition={{ delay: i * 0.1 }}
                 className="bg-card rounded-xl shadow-card border border-border overflow-hidden"
               >
-                {/* Header */}
                 <button
                   onClick={() => setExpandedId(expandedId === story.id ? null : story.id)}
                   className="w-full px-6 py-4 flex items-center justify-between hover:bg-secondary/20 transition-colors"
@@ -217,7 +197,6 @@ const UserStories = () => {
                   </div>
                 </button>
 
-                {/* Expanded content */}
                 <AnimatePresence>
                   {expandedId === story.id && (
                     <motion.div
@@ -228,7 +207,6 @@ const UserStories = () => {
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-5 border-t border-border pt-4 space-y-4">
-                        {/* Full story */}
                         <div className="bg-secondary/30 rounded-lg p-4">
                           <p className="text-sm text-foreground leading-relaxed">
                             <strong>En tant que</strong> {story.role},<br />
@@ -237,7 +215,6 @@ const UserStories = () => {
                           </p>
                         </div>
 
-                        {/* Acceptance Criteria */}
                         <div>
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                             Critères d'acceptation
@@ -252,7 +229,6 @@ const UserStories = () => {
                           </ul>
                         </div>
 
-                        {/* Complexity */}
                         <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                           <Badge className={`${complexityColors[story.complexity]} border text-xs shrink-0`}>
                             Complexité {story.complexity}
@@ -260,13 +236,8 @@ const UserStories = () => {
                           <p className="text-sm text-muted-foreground">{story.complexityReason}</p>
                         </div>
 
-                        {/* Copy */}
                         <div className="flex justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyStory(story)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => copyStory(story)}>
                             {copiedId === story.id ? (
                               <><Check className="w-4 h-4 mr-1" /> Copié !</>
                             ) : (
