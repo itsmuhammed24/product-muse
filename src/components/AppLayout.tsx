@@ -9,8 +9,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
-      <main className="ml-[240px] min-h-screen">
-        <div className="px-10 py-8 max-w-[960px]">
+      <main className="ml-[220px] min-h-screen">
+        <div className="px-12 py-10 max-w-[920px]">
           {children}
         </div>
       </main>

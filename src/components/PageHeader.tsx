@@ -7,16 +7,16 @@ interface PageHeaderProps {
   icon?: ReactNode;
 }
 
-const PageHeader = ({ title, description, icon }: PageHeaderProps) => {
+const PageHeader = ({ title, description }: PageHeaderProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="mb-8"
+      transition={{ duration: 0.3 }}
+      className="mb-10"
     >
-      <h1 className="text-[32px] font-normal text-foreground leading-tight mb-1">{title}</h1>
-      <p className="text-[14px] text-muted-foreground">{description}</p>
+      <h1 className="text-[36px] text-foreground leading-[1.1] mb-2">{title}</h1>
+      <p className="text-[14px] text-muted-foreground max-w-lg">{description}</p>
     </motion.div>
   );
 };
